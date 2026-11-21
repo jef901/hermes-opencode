@@ -96,13 +96,65 @@ Ejemplo de `opencode.json`:
 Consulta la [documentación de OpenCode](https://opencode.ai/docs) para la
 referencia completa de configuración.
 
-## Pruebas
+## Panel de Control Local
 
-<!-- TODO: Explica cómo ejecutar y qué validan tus pruebas. -->
+App web de ejemplo con FastAPI + HTML/CSS (sin frameworks JS), con estado del
+sistema (hora, CPU/RAM simuladas, saludo) y una lista de tareas en memoria.
+
+```
+hermes-opencode/
+├── app.py               # Servidor FastAPI + API
+├── index.html           # Interfaz (HTML/CSS/JS vanilla)
+├── requirements.txt     # Dependencias Python
+├── Dockerfile
+├── docker-compose.yml   # Levanta la app en el puerto 8080
+├── README.md
+└── AGENTS.md
+```
+
+### Ejecutar con Docker (recomendado)
 
 ```bash
-# Ejemplo: ejecutar el/los test(s)
-npm test
+docker compose up --build -d
+# Abrir http://localhost:8080
+docker compose down
+```
+
+### Ejecutar en local
+
+```bash
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8080
+# Abrir http://localhost:8080
+```
+
+### Endpoints
+
+| Método | Ruta                  | Descripción                          |
+| ------ | --------------------- | ------------------------------------ |
+| GET    | `/`                   | Página principal                     |
+| GET    | `/api/status`         | Hora, saludo, CPU/RAM simuladas      |
+| GET    | `/api/tasks`          | Lista de tareas                      |
+| POST   | `/api/tasks`          | Agregar tarea `{ "texto": "..." }`   |
+| PATCH  | `/api/tasks/{id}`     | Alternar completada                  |
+| DELETE | `/api/tasks/{id}`     | Eliminar tarea                       |
+| GET    | `/api/services`       | Servicios en ejecución (systemctl → docker → simulados) |
+| GET    | `/healthz`            | Healthcheck                          |
+
+> Los datos viven en memoria: se pierden al reiniciar el proceso.
+
+> `/api/services` consulta `systemctl list-units --type=service --state=running`
+> (sin `sudo`). Si `systemctl` no está disponible o falla, recurre a
+> `docker ps` (contenedores activos) y, en último caso, a una lista simulada.
+> La respuesta incluye `fuente` (`systemctl` / `docker` / `fallback`) y `total`.
+> Para que estas consultas funcionen dentro del contenedor, `docker-compose.yml`
+> monta `/run/dbus/system_bus_socket:ro` y `/var/run/docker.sock:ro`.
+
+## Pruebas
+
+```bash
+# Smoke test manual de la API
+curl localhost:8080/healthz
 ```
 
 ## Contribución

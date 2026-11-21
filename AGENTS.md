@@ -94,7 +94,8 @@ que no se haya verificado realmente.
 
 | # | Fecha | Agente | Objetivo de la prueba | Comando / Prompt | Resultado | Observaciones |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | — | — | *(pendiente)* | — | — | No hay pruebas ejecutadas todavía |
+| 1 | 2026-11-21 | implementer | Crear app FastAPI (Panel de Control Local) + Docker | `docker compose up -d --build`; `curl /healthz`, `/api/status`, POST/PATCH/DELETE `/api/tasks`, GET `/` | OK | Todos los endpoints responden 200; HTML servido en `/`; datos en memoria. |
+| 2 | 2026-11-21 | implementer | Añadir `GET /api/services` (systemctl → docker → fallback) y tarjeta en la UI | `curl /api/services` (uvicorn local); arranque con `python -m uvicorn app:app` | OK | Devuelve 15 servicios reales vía `systemctl` (`fuente: systemctl`, `total: 15`); UI muestra tarjeta con botón "Actualizar". |
 
 ### Leyenda de resultados
 

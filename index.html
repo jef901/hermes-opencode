@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Control Local</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #273549;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+      --radius: 16px;
+      --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at 100% -10%, #1e293b 0%, var(--bg) 60%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 920px;
+      display: grid;
+      gap: 24px;
+    }
+
+    header.hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .greeting {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: right;
+      line-height: 1;
+    }
+
+    .clock small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 400;
+      margin-top: 6px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .meter {
+      margin-bottom: 20px;
+    }
+
+    .meter .label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .meter .label b { color: var(--text); }
+
+    .bar {
+      height: 14px;
+      background: var(--panel-2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .bar.cpu > span { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+    .bar.ram > span { background: linear-gradient(90deg, #22c55e, #84cc16); }
+
+    .todo form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .todo input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .todo input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: transform 0.1s, opacity 0.2s, background 0.2s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #06263a;
+    }
+
+    .btn-primary:hover { background: #7dd3fc; }
+
+    ul.tasks {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    ul.tasks li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      animation: slideIn 0.25s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    ul.tasks li .check {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      border: 2px solid var(--accent);
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    ul.tasks li.done .check {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+
+    ul.tasks li.done .check::after {
+      content: "✓";
+      font-size: 0.85rem;
+      color: #052e16;
+      font-weight: 800;
+    }
+
+    ul.tasks li .txt {
+      flex: 1;
+      overflow-wrap: anywhere;
+    }
+
+    ul.tasks li.done .txt {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    ul.tasks li .del {
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 1rem;
+    }
+
+    ul.tasks li .del:hover { color: var(--danger); }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px 0;
+      font-size: 0.9rem;
+    }
+
+    .counter {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+
+    /* --- Tarjeta de servicios ---------------------------------------------- */
+    .services .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .services .card-head h2 {
+      margin: 0;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 14px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-ghost:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost.spinning svg {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin-bottom: 14px;
+      background: var(--panel-2);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .source-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .source-badge[data-source="docker"] .dot {
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+
+    .source-badge[data-source="fallback"] .dot {
+      background: var(--muted);
+      box-shadow: none;
+    }
+
+    ul.services-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    ul.services-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    ul.services-list li .name {
+      flex: 1;
+      overflow-wrap: anywhere;
+    }
+
+    ul.services-list li .badge {
+      font-size: 0.68rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--accent-2);
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      border-radius: 999px;
+      padding: 2px 8px;
+      flex: 0 0 auto;
+    }
+
+    .services .empty {
+      text-align: left;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <h1>Panel de Control Local</h1>
+        <p class="greeting" id="greeting">Cargando…</p>
+      </div>
+      <div class="clock">
+        <span id="clock">--:--:--</span>
+        <small id="date">--</small>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Estado del sistema</h2>
+
+        <div class="meter">
+          <div class="label"><span>Uso de CPU</span><b id="cpuVal">0%</b></div>
+          <div class="bar cpu"><span id="cpuBar" style="width:0%"></span></div>
+        </div>
+
+        <div class="meter">
+          <div class="label"><span>Memoria RAM</span><b id="ramVal">0%</b></div>
+          <div class="bar ram"><span id="ramBar" style="width:0%"></span></div>
+        </div>
+      </div>
+
+      <div class="card todo">
+        <h2>Lista de tareas</h2>
+        <form id="taskForm">
+          <input
+            type="text"
+            id="taskInput"
+            placeholder="Nueva tarea…"
+            maxlength="200"
+            autocomplete="off"
+          />
+          <button class="btn-primary" type="submit">Agregar</button>
+        </form>
+        <ul class="tasks" id="taskList"></ul>
+        <div class="counter" id="counter">0 tareas</div>
+      </div>
+    </section>
+
+    <section class="card services">
+      <div class="card-head">
+        <h2>Servicios en ejecución</h2>
+        <button id="refreshServices" class="btn-ghost" type="button" title="Actualizar servicios">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <polyline points="21 3 21 9 15 9" />
+          </svg>
+          Actualizar
+        </button>
+      </div>
+      <span id="sourceBadge" class="source-badge" data-source="fallback">
+        <span class="dot"></span>
+        <span id="sourceText">Sin datos</span>
+      </span>
+      <ul class="services-list" id="serviceList">
+        <li class="empty">Cargando servicios…</li>
+      </ul>
+    </section>
+
+    <footer>Panel de Control Local · datos en memoria · se reinician al recargar el servidor</footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // --- Estado del sistema -------------------------------------------------
+    async function loadStatus() {
+      try {
+        const r = await fetch("/api/status");
+        const s = await r.json();
+        $("clock").textContent = s.hora;
+        $("date").textContent = s.fecha;
+        $("greeting").textContent = s.saludo;
+        $("cpuVal").textContent = s.cpu + "%";
+        $("cpuBar").style.width = s.cpu + "%";
+        $("ramVal").textContent = s.ram + "%";
+        $("ramBar").style.width = s.ram + "%";
+      } catch (e) {
+        console.error("No se pudo cargar el estado", e);
+      }
+    }
+
+    // --- Tareas -------------------------------------------------------------
+    async function loadTasks() {
+      try {
+        const r = await fetch("/api/tasks");
+        const data = await r.json();
+        renderTasks(data.tasks || []);
+      } catch (e) {
+        console.error("No se pudieron cargar las tareas", e);
+      }
+    }
+
+    function renderTasks(tasks) {
+      const list = $("taskList");
+      list.innerHTML = "";
+      if (tasks.length === 0) {
+        list.innerHTML = '<li class="empty">No hay tareas todavía. ¡Agrega la primera!</li>';
+      } else {
+        for (const t of tasks) {
+          const li = document.createElement("li");
+          li.className = t.completada ? "done" : "";
+          li.dataset.id = t.id;
+
+          const check = document.createElement("button");
+          check.className = "check";
+          check.title = t.completada ? "Marcar como pendiente" : "Marcar como completada";
+          check.addEventListener("click", () => toggleTask(t.id));
+
+          const txt = document.createElement("span");
+          txt.className = "txt";
+          txt.textContent = t.texto;
+
+          const del = document.createElement("button");
+          del.className = "del";
+          del.title = "Eliminar";
+          del.textContent = "✕";
+          del.addEventListener("click", () => deleteTask(t.id));
+
+          li.append(check, txt, del);
+          list.appendChild(li);
+        }
+      }
+
+      const done = tasks.filter((t) => t.completada).length;
+      $("counter").textContent = `${done}/${tasks.length} completadas`;
+    }
+
+    async function toggleTask(id) {
+      await fetch(`/api/tasks/${id}`, { method: "PATCH" });
+      loadTasks();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+      loadTasks();
+    }
+
+    $("taskForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const input = $("taskInput");
+      const texto = input.value.trim();
+      if (!texto) return;
+      const r = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      const data = await r.json();
+      if (data.error) {
+        alert(data.error);
+      } else {
+        input.value = "";
+        input.focus();
+      }
+      loadTasks();
+    });
+
+    // --- Servicios ----------------------------------------------------------
+    const SOURCE_LABELS = {
+      systemctl: "systemctl (en vivo)",
+      docker: "Docker (contenedores activos)",
+      fallback: "Lista simulada",
+    };
+
+    function renderServices(data) {
+      const list = $("serviceList");
+      list.innerHTML = "";
+
+      const source = data.fuente || "fallback";
+      const badge = $("sourceBadge");
+      badge.dataset.source = source;
+      const total = data.total ?? (data.services ? data.services.length : 0);
+      $("sourceText").textContent = `${SOURCE_LABELS[source] || source} · ${total} servicio(s)`;
+
+      if (!data.services || data.services.length === 0) {
+        list.innerHTML = '<li class="empty">No se detectaron servicios en ejecución.</li>';
+        return;
+      }
+
+      for (const name of data.services) {
+        const li = document.createElement("li");
+        const span = document.createElement("span");
+        span.className = "name";
+        span.textContent = name;
+        const badgeEl = document.createElement("span");
+        badgeEl.className = "badge";
+        badgeEl.textContent = source === "fallback" ? "simulado" : "activo";
+        li.append(span, badgeEl);
+        list.appendChild(li);
+      }
+    }
+
+    async function loadServices() {
+      const btn = $("refreshServices");
+      btn.classList.add("spinning");
+      btn.disabled = true;
+      try {
+        const r = await fetch("/api/services", { cache: "no-store" });
+        const data = await r.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        renderServices(data);
+      } catch (e) {
+        console.error("No se pudieron cargar los servicios", e);
+        $("serviceList").innerHTML =
+          '<li class="empty">No se pudieron cargar los servicios.</li>';
+        $("sourceText").textContent = "Error al consultar";
+      } finally {
+        btn.classList.remove("spinning");
+        btn.disabled = false;
+      }
+    }
+
+    $("refreshServices").addEventListener("click", loadServices);
+
+    // --- Inicio y actualización periódica -----------------------------------
+    loadStatus();
+    loadTasks();
+    loadServices();
+    setInterval(loadStatus, 1500);
+    setInterval(loadServices, 10000);
+  </script>
+</body>
+</html>
