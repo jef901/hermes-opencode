@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import os
 import time
 from datetime import datetime
@@ -20,6 +21,12 @@ if os.path.exists("/host/proc"):
     psutil.PROCFS_PATH = "/host/proc"
 
 app = FastAPI(title="Panel de Control Local", version="1.0.0")
+
+# DB Setup
+def get_db():
+    conn = sqlite3.connect("/app/data/tasks.db")
+    conn.execute("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY, content TEXT)")
+    return conn
 
 STATS_INTERVAL = 3.0
 _cached_stats: dict[str, float] = {}
