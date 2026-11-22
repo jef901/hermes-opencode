@@ -101,7 +101,7 @@ def get_service_logs(service_name: str) -> JSONResponse:
 
     try:
         proc = subprocess.run(
-            ["journalctl", "-u", service_name, "-n", str(JOURNAL_LINES), "--no-pager"],
+            ["journalctl", "--merge", "-u", service_name, "-n", str(JOURNAL_LINES), "--no-pager"],
             capture_output=True,
             text=True,
             errors="replace",
