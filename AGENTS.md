@@ -96,6 +96,7 @@ que no se haya verificado realmente.
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 2026-11-21 | implementer | Crear app FastAPI (Panel de Control Local) + Docker | `docker compose up -d --build`; `curl /healthz`, `/api/status`, POST/PATCH/DELETE `/api/tasks`, GET `/` | OK | Todos los endpoints responden 200; HTML servido en `/`; datos en memoria. |
 | 2 | 2026-11-21 | implementer | Añadir `GET /api/services` (systemctl → docker → fallback) y tarjeta en la UI | `curl /api/services` (uvicorn local); arranque con `python -m uvicorn app:app` | OK | Devuelve 15 servicios reales vía `systemctl` (`fuente: systemctl`, `total: 15`); UI muestra tarjeta con botón "Actualizar". |
+| 3 | 2026-11-21 | implementer | Ver `journalctl` de un servicio: endpoint `GET /api/services/{nombre}/logs` + modal en la UI | `docker compose up -d --build`; `curl /api/status`, `/api/services`, `/api/services/{svc}/logs` (válido, inexistente y nombre inválido), `GET /` | OK | Imagen reconstruida (con `systemd`) y contenedor `panel-control-local` arriba; logs reales con `fuente: journalctl`; nombre inválido → 400; `../etc/passwd` → 404; servicio inexistente → 200 con `-- No entries --`. |
 
 ### Leyenda de resultados
 

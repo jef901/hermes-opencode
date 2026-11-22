@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libdbus-1-dev \
     gcc \
     python3-dev \
+    systemd \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

@@ -5,6 +5,7 @@ App web de control de sistemas con métricas en tiempo real.
 ## Arquitectura
 - **Estado del Sistema**: Utiliza `psutil` configurado con `/host/proc` para leer métricas reales de CPU y RAM desde el anfitrión.
 - **Servicios**: Consulta servicios activos (`.service`) de `systemd` mediante el socket D-Bus del anfitrión (`/run/dbus/system_bus_socket`).
+- **Logs**: Muestra las últimas líneas de `journalctl` de cada servicio (`GET /api/services/{nombre}/logs`) en un modal de la UI; los volúmenes del journal se montan de solo lectura en `docker-compose.yml`.
 - **Persistencia**: Las tareas se guardan en una base de datos SQLite en `./data/tasks.db` utilizando volúmenes Docker.
 
 ## Despliegue

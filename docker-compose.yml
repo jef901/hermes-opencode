@@ -7,5 +7,7 @@ services:
     volumes:
       - /proc:/host/proc:ro
       - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /run/log/journal:/run/log/journal:ro
       - ./data:/app/data
     restart: unless-stopped

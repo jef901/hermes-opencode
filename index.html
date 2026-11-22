@@ -370,7 +370,27 @@
       border-radius: 10px;
       font-size: 0.9rem;
       font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
     }
+
+    ul.services-list li:hover,
+    ul.services-list li:focus-visible {
+      border-color: var(--accent);
+      background: #2b3b52;
+      outline: none;
+    }
+
+    ul.services-list li:active { transform: scale(0.995); }
+
+    ul.services-list li .name::after {
+      content: " ›";
+      color: var(--muted);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    ul.services-list li:hover .name::after { opacity: 1; }
 
     ul.services-list li .name {
       flex: 1;
@@ -392,6 +412,118 @@
     .services .empty {
       text-align: left;
     }
+
+    /* --- Modal de logs (estilo terminal) ----------------------------------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 50;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 780px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      background: #0b1120;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.08);
+      animation: modalIn 0.18s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal .titlebar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #111a2e;
+      border-bottom: 1px solid #1e3a5f;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .modal .titlebar .dots {
+      display: inline-flex;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .modal .titlebar .dots i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    .modal .titlebar .dots i:nth-child(2) { background: #eab308; }
+    .modal .titlebar .dots i:nth-child(3) { background: #22c55e; }
+
+    .modal .titlebar .title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #7dd3fc;
+    }
+
+    .modal .logs {
+      margin: 0;
+      padding: 16px 18px;
+      overflow: auto;
+      flex: 1;
+      min-height: 200px;
+      max-height: 56vh;
+      background: #060b16;
+      color: #a7f3d0;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      tab-size: 2;
+    }
+
+    .modal .logs .placeholder { color: var(--muted); font-style: italic; }
+    .modal .logs .error-msg { color: #fca5a5; }
+
+    .modal .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #111a2e;
+      border-top: 1px solid #1e3a5f;
+    }
+
+    .modal .actions .btn-close {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .modal .actions .btn-close:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .modal .actions button:disabled { opacity: 0.55; cursor: wait; }
 
     footer {
       text-align: center;
@@ -469,6 +601,21 @@
 
     <footer>Panel de Control Local · datos en memoria · se reinician al recargar el servidor</footer>
   </main>
+
+  <div class="modal-backdrop" id="logsModal" role="dialog" aria-modal="true" aria-labelledby="logsModalTitle">
+    <div class="modal">
+      <div class="titlebar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="title" id="logsModalTitle">journalctl</span>
+        <span id="logsCount"></span>
+      </div>
+      <pre class="logs" id="logsBody"><span class="placeholder">Cargando logs…</span></pre>
+      <div class="actions">
+        <button type="button" class="btn-primary" id="refreshLogs">Refrescar</button>
+        <button type="button" class="btn-close" id="closeLogs">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -590,6 +737,9 @@
 
       for (const name of data.services) {
         const li = document.createElement("li");
+        li.tabIndex = 0;
+        li.setAttribute("role", "button");
+        li.title = `Ver logs de ${name}`;
         const span = document.createElement("span");
         span.className = "name";
         span.textContent = name;
@@ -597,6 +747,13 @@
         badgeEl.className = "badge";
         badgeEl.textContent = source === "fallback" ? "simulado" : "activo";
         li.append(span, badgeEl);
+        li.addEventListener("click", () => openLogs(name));
+        li.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            openLogs(name);
+          }
+        });
         list.appendChild(li);
       }
     }
@@ -624,6 +781,82 @@
     }
 
     $("refreshServices").addEventListener("click", loadServices);
+
+    // --- Modal de logs de servicios ----------------------------------------
+    let logsService = null;
+
+    function renderLogsText(lines) {
+      const body = $("logsBody");
+      body.innerHTML = "";
+      if (!lines || lines.length === 0) {
+        body.innerHTML = '<span class="placeholder">Sin logs que mostrar.</span>';
+        $("logsCount").textContent = "0 líneas";
+        return;
+      }
+      for (const line of lines) {
+        body.appendChild(document.createTextNode(line + "\n"));
+      }
+      $("logsCount").textContent = `${lines.length} línea(s)`;
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function renderLogsError(msg) {
+      $("logsBody").innerHTML = "";
+      const span = document.createElement("span");
+      span.className = "error-msg";
+      span.textContent = msg;
+      $("logsBody").appendChild(span);
+      $("logsCount").textContent = "error";
+    }
+
+    async function loadLogs() {
+      if (!logsService) return;
+      const btn = $("refreshLogs");
+      btn.disabled = true;
+      $("logsBody").innerHTML = '<span class="placeholder">Cargando logs…</span>';
+      try {
+        const r = await fetch(
+          `/api/services/${encodeURIComponent(logsService)}/logs`,
+          { cache: "no-store" }
+        );
+        const data = await r.json();
+        if (!r.ok || data.error) {
+          renderLogsError(data.error || `Error ${r.status} al consultar los logs.`);
+          return;
+        }
+        renderLogsText(data.logs);
+      } catch (e) {
+        console.error("No se pudieron cargar los logs", e);
+        renderLogsError("No se pudieron cargar los logs: fallo de conexión.");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function openLogs(name) {
+      logsService = name;
+      $("logsModalTitle").textContent = `journalctl -u ${name}`;
+      $("logsCount").textContent = "";
+      $("logsModal").classList.add("open");
+      document.body.style.overflow = "hidden";
+      $("refreshLogs").focus();
+      loadLogs();
+    }
+
+    function closeLogs() {
+      $("logsModal").classList.remove("open");
+      document.body.style.overflow = "";
+      logsService = null;
+    }
+
+    $("refreshLogs").addEventListener("click", loadLogs);
+    $("closeLogs").addEventListener("click", closeLogs);
+    $("logsModal").addEventListener("click", (ev) => {
+      if (ev.target === $("logsModal")) closeLogs();
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && $("logsModal").classList.contains("open")) closeLogs();
+    });
 
     // --- Inicio y actualización periódica -----------------------------------
     loadStatus();
